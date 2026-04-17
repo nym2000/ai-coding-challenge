@@ -405,7 +405,6 @@ body {
   color: white;
   border-radius: 8px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -415,11 +414,18 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow-y: auto;
   line-height: 1.5;
+  overflow: visible;
 }
 
 .flashcard-back {
   transform: rotateY(180deg);
   background: var(--color-card-back);
+}
+
+.flashcard-front p,
+.flashcard-back p {
+  margin: 0;
+  word-wrap: break-word;
 }
 
 .card-label {
@@ -428,15 +434,13 @@ body {
   right: var(--spacing-md);
   font-size: var(--font-size-sm);
   font-weight: 600;
-  opacity: 0.8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.flashcard-front p,
-.flashcard-back p {
-  margin: 0;
-  word-wrap: break-word;
+  opacity: 0.9;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
 }
 
 /* ==========================================
