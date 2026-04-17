@@ -24,6 +24,7 @@
         <nav id="deck-list" class="deck-list" aria-label="Deck list">
           <!-- Deck items will be inserted here -->
         </nav>
+        <button class="btn btn-primary" id="sidebar-new-deck-btn" aria-label="Create a new deck" style="width: 100%; margin-top: var(--spacing-md);">+ New Deck</button>
         <div class="empty-state" id="empty-decks" style="display: none;">
           <p>No decks yet. Create one to get started!</p>
         </div>
@@ -122,6 +123,32 @@
     <footer class="app-footer">
       <p>💡 Press <kbd>Space</kbd> to flip, <kbd>←</kbd><kbd>→</kbd> to navigate, or <kbd>Esc</kbd> to close modals.</p>
     </footer>
+
+    <!-- New Deck Modal -->
+    <div class="modal-overlay" id="new-deck-modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Create New Deck</h2>
+          <button class="modal-close" id="modal-close-btn" aria-label="Close modal">✕</button>
+        </div>
+        <form id="new-deck-form" class="modal-form">
+          <div class="form-group">
+            <label for="deck-name-input">Deck Name</label>
+            <input 
+              type="text" 
+              id="deck-name-input" 
+              placeholder="Enter deck name..." 
+              required
+              aria-label="Deck name"
+            >
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Deck</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>

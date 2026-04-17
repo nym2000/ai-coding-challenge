@@ -350,9 +350,41 @@ function onThemeToggleClick() {
   Theme.toggleTheme();
 }
 
+function openNewDeckModal() {
+  document.getElementById('new-deck-modal').style.display = 'flex';
+  document.getElementById('deck-name-input').focus();
+  document.getElementById('new-deck-form').reset();
+}
+
+function closeNewDeckModal() {
+  document.getElementById('new-deck-modal').style.display = 'none';
+  document.getElementById('new-deck-form').reset();
+}
+
 function onNewDeckClick() {
-  console.log('New deck button clicked');
-  // TODO: Open modal for new deck
+  openNewDeckModal();
+}
+
+function onNewDeckFormSubmit(e) {
+  e.preventDefault();
+  const deckName = document.getElementById('deck-name-input').value.trim();
+  
+  if (!deckName) {
+    alert('Please enter a deck name');
+    return;
+  }
+  
+  // Create new deck
+  const newDeck = {
+    id: 'deck-' + Date.now(),
+    name: deckName
+  };
+  
+  AppState.decks.push(newDeck);
+  AppState.cardsByDeckId[newDeck.id] = [];
+  
+  closeNewDeckModal();
+  UI.render();
 }
 
 function onEditDeckClick() {
@@ -458,6 +490,15 @@ function onCardModeToggle(mode) {
 
 // Keyboard shortcuts
 function onKeyDown(e) {
+  // Close modal on Escape
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('new-deck-modal');
+    if (modal.style.display === 'flex') {
+      closeNewDeckModal();
+      return;
+    }
+  }
+
   if (!AppState.activeDeckId) return;
 
   switch (e.key) {
@@ -497,6 +538,7 @@ function init() {
   // Setup event listeners
   document.getElementById('theme-toggle').addEventListener('click', onThemeToggleClick);
   document.getElementById('new-deck-button').addEventListener('click', onNewDeckClick);
+  document.getElementById('sidebar-new-deck-btn').addEventListener('click', onNewDeckClick);
   document.getElementById('edit-deck-button').addEventListener('click', onEditDeckClick);
   document.getElementById('delete-deck-button').addEventListener('click', onDeleteDeckClick);
 
@@ -514,6 +556,17 @@ function init() {
 
   document.getElementById('search-input').addEventListener('input', onSearchInput);
   document.getElementById('card-index').addEventListener('change', onCardIndexChange);
+
+  // Modal event listeners
+  document.getElementById('new-deck-form').addEventListener('submit', onNewDeckFormSubmit);
+  document.getElementById('modal-close-btn').addEventListener('click', closeNewDeckModal);
+  document.getElementById('modal-cancel-btn').addEventListener('click', closeNewDeckModal);
+  document.getElementById('new-deck-modal').addEventListener('click', (e) => {
+    // Close modal if clicking on overlay background
+    if (e.target === document.getElementById('new-deck-modal')) {
+      closeNewDeckModal();
+    }
+  });
 
   document.addEventListener('keydown', onKeyDown);
 
