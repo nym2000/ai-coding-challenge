@@ -405,6 +405,7 @@ body {
   color: white;
   border-radius: 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -419,6 +420,17 @@ body {
 .flashcard-back {
   transform: rotateY(180deg);
   background: var(--color-card-back);
+}
+
+.card-label {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .flashcard-front p,
