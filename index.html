@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <h1 class="app-title">📚 Flashcards</h1>
+      <div class="header-actions">
+        <button class="btn btn-secondary theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
+          🌙
+        </button>
+        <button class="btn btn-primary" id="new-deck-button" aria-label="Create a new deck">+ New Deck</button>
+      </div>
+    </header>
+
+    <div class="app-layout">
+      <aside class="app-sidebar">
+        <h2 class="sidebar-title">Decks</h2>
+        <nav id="deck-list" class="deck-list" aria-label="Deck list">
+          <!-- Deck items will be inserted here -->
+        </nav>
+        <div class="empty-state" id="empty-decks" style="display: none;">
+          <p>No decks yet. Create one to get started!</p>
+        </div>
+      </aside>
+
+      <main class="app-main">
+        <!-- Empty State -->
+        <section class="empty-state-container" id="empty-state">
+          <div class="empty-state">
+            <p>👋 Select a deck to begin studying</p>
+          </div>
+        </section>
+
+        <!-- Deck View -->
+        <section class="deck-view" id="deck-view" style="display: none;">
+          <!-- Deck Header -->
+          <div class="deck-header">
+            <h2 id="deck-title">Deck Name</h2>
+            <div class="deck-actions">
+              <button class="btn btn-small" id="edit-deck-button" aria-label="Edit deck">Edit</button>
+              <button class="btn btn-small btn-danger" id="delete-deck-button" aria-label="Delete deck">Delete</button>
+            </div>
+          </div>
+
+          <!-- Deck Toolbar -->
+          <div class="deck-toolbar">
+            <div class="search-box">
+              <input 
+                type="search" 
+                id="search-input" 
+                placeholder="Search cards..." 
+                aria-label="Search cards in deck"
+              >
+            </div>
+            <button class="btn btn-secondary" id="shuffle-button" aria-label="Shuffle cards">🔀 Shuffle</button>
+            <button class="btn btn-primary" id="new-card-button" aria-label="Add a new card">+ New Card</button>
+          </div>
+
+          <!-- Card Stats -->
+          <div class="card-stats">
+            <span id="card-count">0 cards</span>
+            <span id="filter-count" style="display: none;">(<span id="filter-count-num">0</span> shown)</span>
+          </div>
+
+          <!-- Study Area -->
+          <div class="study-area">
+            <!-- Card Display -->
+            <div class="card-container" id="card-container">
+              <div class="flashcard" id="flashcard">
+                <div class="flashcard-inner">
+                  <div class="flashcard-front">
+                    <p id="card-front">Select a card to begin</p>
+                  </div>
+                  <div class="flashcard-back">
+                    <p id="card-back">Card back</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Controls -->
+            <div class="card-controls">
+              <button class="btn btn-secondary" id="prev-card">← Previous</button>
+              <button class="btn btn-secondary" id="flip-card" aria-label="Flip card">🔄 Flip</button>
+              <button class="btn btn-secondary" id="next-card">Next →</button>
+            </div>
+
+            <!-- Card Navigation -->
+            <div class="card-nav">
+              <input 
+                type="number" 
+                id="card-index" 
+                min="1" 
+                value="1"
+                aria-label="Current card number"
+              >
+              <span id="card-nav">/ 0</span>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="card-actions">
+              <button class="btn btn-small" id="edit-card-button" aria-label="Edit current card">Edit</button>
+              <button class="btn btn-small btn-danger" id="delete-card-button" aria-label="Delete current card">Delete</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="app-footer">
+      <p>💡 Press <kbd>Space</kbd> to flip, <kbd>←</kbd><kbd>→</kbd> to navigate, or <kbd>Esc</kbd> to close modals.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
