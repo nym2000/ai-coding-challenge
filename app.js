@@ -1,227 +1,664 @@
-// app.js
-// Minimal, robust flashcards UI logic. Hooks to common element IDs/classes if present.
+/**
+ * Flashcards Study App - Main Application Logic
+ * Features: Deck CRUD, Card CRUD, Study Mode, LocalStorage Persistence
+ */
 
-(() => {
-    const LS_KEY = 'flashcards';
-    let cards = [];
-    let current = 0;
+// ============================================
+// State Management
+// ============================================
 
-    // Query helpers (no-op if element missing)
-    const $ = (s) => document.querySelector(s);
-    const $$ = (s) => Array.from(document.querySelectorAll(s));
+const AppState = {
+    decks: [],
+    cardsByDeckId: {},
+    activeDeckId: null,
+    activeCardIndex: 0,
+    isCardFlipped: false,
+    filteredCards: [], // For search results
+    isSearchActive: false,
+    editingDeckId: null,
+    editingCardId: null,
+    confirmAction: null, // For delete confirmations
+};
 
-    // Elements (optional)
-    const el = {
-        cardContainer: $('#card-container'),
-        indexDisplay: $('#current-index'),
-        prevBtn: $('#prev-btn'),
-        nextBtn: $('#next-btn'),
-        addToggle: $('#show-add-card'),
-        clearBtn: $('#clear-btn'),
-        addForm: $('#add-card-form'),
-        qInput: $('#question'),
-        aInput: $('#answer'),
-        saveBtn: $('#save-card-btn'),
-        cardsList: $('#cards-list') // optional list view
-    };
+// ============================================
+// Storage Utilities
+// ============================================
 
-    // Storage
-    function load() {
+const Storage = {
+    STORAGE_KEY: 'flashcards_app_state',
+
+    load() {
         try {
-            const data = localStorage.getItem(LS_KEY);
-            cards = data ? JSON.parse(data) : [];
+            const data = localStorage.getItem(Storage.STORAGE_KEY);
+            if (!data) return null;
+            return JSON.parse(data);
         } catch (e) {
-            cards = [];
+            console.error('Failed to load state from localStorage:', e);
+            return null;
         }
-        if (current >= cards.length) current = Math.max(0, cards.length - 1);
-    }
-    function save() {
-        localStorage.setItem(LS_KEY, JSON.stringify(cards));
-    }
+    },
 
-    // Rendering a single active card in cardContainer (flip on click)
-    function renderActiveCard() {
-        const container = el.cardContainer;
-        if (!container) return;
-        container.innerHTML = '';
+    save(state) {
+        try {
+            localStorage.setItem(Storage.STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error('Failed to save state to localStorage:', e);
+        }
+    },
 
-        if (cards.length === 0) {
-            container.textContent = 'No cards yet.';
-            updateIndexDisplay();
+    clear() {
+        localStorage.removeItem(Storage.STORAGE_KEY);
+    },
+
+    init() {
+        const savedState = Storage.load();
+        if (savedState) {
+            Object.assign(AppState, savedState);
+        }
+    },
+};
+
+// ============================================
+// Utility Functions
+// ============================================
+
+function generateId() {
+    return Math.random().toString(36).substr(2, 9);
+}
+
+function getCurrentDeck() {
+    return AppState.decks.find(d => d.id === AppState.activeDeckId) || null;
+}
+
+function getCurrentCards() {
+    if (!AppState.activeDeckId) return [];
+    return AppState.cardsByDeckId[AppState.activeDeckId] || [];
+}
+
+function getCurrentCard() {
+    const cards = AppState.isSearchActive ? AppState.filteredCards : getCurrentCards();
+    return cards[AppState.activeCardIndex] || null;
+}
+
+function persistState() {
+    Storage.save(AppState);
+}
+
+// ============================================
+// Modal Management
+// ============================================
+
+const Modal = {
+    open(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            // Focus first input
+            const input = modal.querySelector('input, textarea');
+            if (input) setTimeout(() => input.focus(), 100);
+        }
+    },
+
+    close(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+    },
+
+    closeAll() {
+        document.querySelectorAll('.modal').forEach(m => {
+            m.classList.remove('is-open');
+            m.setAttribute('aria-hidden', 'true');
+        });
+    },
+};
+
+// ============================================
+// Deck CRUD Operations
+// ============================================
+
+const DeckOps = {
+    create(name) {
+        const newDeck = {
+            id: generateId(),
+            name: name.trim(),
+            createdAt: Date.now(),
+        };
+        AppState.decks.push(newDeck);
+        AppState.cardsByDeckId[newDeck.id] = [];
+        persistState();
+        return newDeck;
+    },
+
+    update(deckId, name) {
+        const deck = AppState.decks.find(d => d.id === deckId);
+        if (deck) {
+            deck.name = name.trim();
+            persistState();
+        }
+        return deck;
+    },
+
+    delete(deckId) {
+        AppState.decks = AppState.decks.filter(d => d.id !== deckId);
+        delete AppState.cardsByDeckId[deckId];
+        if (AppState.activeDeckId === deckId) {
+            AppState.activeDeckId = AppState.decks.length > 0 ? AppState.decks[0].id : null;
+            AppState.activeCardIndex = 0;
+            AppState.isCardFlipped = false;
+        }
+        persistState();
+    },
+
+    select(deckId) {
+        AppState.activeDeckId = deckId;
+        AppState.activeCardIndex = 0;
+        AppState.isCardFlipped = false;
+        AppState.isSearchActive = false;
+        AppState.filteredCards = [];
+        persistState();
+    },
+};
+
+// ============================================
+// Card CRUD Operations
+// ============================================
+
+const CardOps = {
+    create(deckId, front, back) {
+        if (!AppState.cardsByDeckId[deckId]) {
+            AppState.cardsByDeckId[deckId] = [];
+        }
+        const newCard = {
+            id: generateId(),
+            front: front.trim(),
+            back: back.trim(),
+            createdAt: Date.now(),
+        };
+        AppState.cardsByDeckId[deckId].push(newCard);
+        persistState();
+        return newCard;
+    },
+
+    update(deckId, cardId, front, back) {
+        const cards = AppState.cardsByDeckId[deckId] || [];
+        const card = cards.find(c => c.id === cardId);
+        if (card) {
+            card.front = front.trim();
+            card.back = back.trim();
+            persistState();
+        }
+        return card;
+    },
+
+    delete(deckId, cardId) {
+        if (AppState.cardsByDeckId[deckId]) {
+            AppState.cardsByDeckId[deckId] = AppState.cardsByDeckId[deckId].filter(c => c.id !== cardId);
+            // Reset index if needed
+            const cards = getCurrentCards();
+            if (AppState.activeCardIndex >= cards.length) {
+                AppState.activeCardIndex = Math.max(0, cards.length - 1);
+            }
+            persistState();
+        }
+    },
+};
+
+// ============================================
+// Study Mode Navigation
+// ============================================
+
+const StudyMode = {
+    getCurrentCardCount() {
+        return AppState.isSearchActive ? AppState.filteredCards.length : getCurrentCards().length;
+    },
+
+    goToCard(index) {
+        const count = StudyMode.getCurrentCardCount();
+        if (count === 0) return;
+        AppState.activeCardIndex = Math.max(0, Math.min(index, count - 1));
+        AppState.isCardFlipped = false;
+        persistState();
+    },
+
+    nextCard() {
+        const count = StudyMode.getCurrentCardCount();
+        if (count === 0) return;
+        StudyMode.goToCard(AppState.activeCardIndex + 1);
+    },
+
+    prevCard() {
+        StudyMode.goToCard(AppState.activeCardIndex - 1);
+    },
+
+    flipCard() {
+        AppState.isCardFlipped = !AppState.isCardFlipped;
+        persistState();
+    },
+
+    shuffle() {
+        const cards = getCurrentCards();
+        if (cards.length === 0) return;
+        // Shuffle using Fisher-Yates
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        AppState.activeCardIndex = 0;
+        AppState.isCardFlipped = false;
+        persistState();
+    },
+};
+
+// ============================================
+// Search & Filter
+// ============================================
+
+const Search = {
+    execute(query) {
+        if (!query.trim()) {
+            AppState.isSearchActive = false;
+            AppState.filteredCards = [];
+            AppState.activeCardIndex = 0;
             return;
         }
 
-        const card = cards[current];
-        const cardEl = document.createElement('div');
-        cardEl.className = 'card';
-        cardEl.style.cursor = 'pointer';
-        cardEl.tabIndex = 0;
+        const cards = getCurrentCards();
+        const lowerQuery = query.toLowerCase();
+        AppState.filteredCards = cards.filter(
+            card =>
+                card.front.toLowerCase().includes(lowerQuery) ||
+                card.back.toLowerCase().includes(lowerQuery)
+        );
+        AppState.isSearchActive = true;
+        AppState.activeCardIndex = 0;
+    },
 
-        const front = document.createElement('div');
-        front.className = 'front';
-        front.textContent = card.question;
+    clear() {
+        AppState.isSearchActive = false;
+        AppState.filteredCards = [];
+        AppState.activeCardIndex = 0;
+    },
+};
 
-        const back = document.createElement('div');
-        back.className = 'back';
-        back.textContent = card.answer;
-        back.style.display = 'none';
+// ============================================
+// UI Rendering
+// ============================================
 
-        // flip toggle
-        function toggleFlip() {
-            const showingBack = back.style.display !== 'none';
-            back.style.display = showingBack ? 'none' : 'block';
-            front.style.display = showingBack ? 'block' : 'none';
+const UI = {
+    renderDeckList() {
+        const deckList = document.getElementById('deckList');
+        const emptyDecks = document.getElementById('emptyDecks');
+
+        deckList.innerHTML = '';
+
+        if (AppState.decks.length === 0) {
+            emptyDecks.style.display = 'block';
+            return;
         }
 
-        cardEl.addEventListener('click', toggleFlip);
-        cardEl.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') toggleFlip();
-        });
+        emptyDecks.style.display = 'none';
 
-        // delete button
-        const del = document.createElement('button');
-        del.className = 'delete-card';
-        del.textContent = 'Delete';
-        del.style.marginTop = '8px';
-        del.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            deleteCard(current);
-        });
-
-        cardEl.appendChild(front);
-        cardEl.appendChild(back);
-        cardEl.appendChild(del);
-        container.appendChild(cardEl);
-
-        updateIndexDisplay();
-    }
-
-    function renderCardsList() {
-        const list = el.cardsList;
-        if (!list) return;
-        list.innerHTML = '';
-        cards.forEach((c, i) => {
+        AppState.decks.forEach(deck => {
             const li = document.createElement('li');
-            li.className = 'cards-list-item';
-            li.innerHTML = `<strong>${i + 1}.</strong> ${escapeHtml(c.question)}`;
+            li.className = 'deck-item';
+            if (deck.id === AppState.activeDeckId) {
+                li.classList.add('active');
+            }
+
+            const cardsCount = (AppState.cardsByDeckId[deck.id] || []).length;
+            li.innerHTML = `
+                <span class="deck-item-name">${escapeHtml(deck.name)}</span>
+                <span class="deck-item-count">${cardsCount}</span>
+            `;
+
             li.addEventListener('click', () => {
-                current = i;
-                renderActiveCard();
+                DeckOps.select(deck.id);
+                UI.render();
             });
-            list.appendChild(li);
+
+            deckList.appendChild(li);
         });
-    }
+    },
 
-    // Utilities
-    function updateIndexDisplay() {
-        const idx = el.indexDisplay;
-        if (!idx) return;
-        if (cards.length === 0) {
-            idx.textContent = '0 / 0';
+    renderMainContent() {
+        const emptyState = document.getElementById('emptyState');
+        const deckView = document.getElementById('deckView');
+
+        if (!AppState.activeDeckId) {
+            emptyState.style.display = 'flex';
+            deckView.style.display = 'none';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        deckView.style.display = 'block';
+
+        const deck = getCurrentDeck();
+        const cards = getCurrentCards();
+
+        // Update deck title
+        document.getElementById('deckTitle').textContent = deck.name;
+
+        // Update card stats
+        const cardCount = cards.length;
+        document.getElementById('cardCount').textContent = `${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+
+        if (AppState.isSearchActive) {
+            document.getElementById('filterCount').style.display = 'inline';
+            document.getElementById('filterCountNum').textContent = AppState.filteredCards.length;
         } else {
-            idx.textContent = `${current + 1} / ${cards.length}`;
-        }
-    }
-
-    function prevCard() {
-        if (cards.length === 0) return;
-        current = (current - 1 + cards.length) % cards.length;
-        renderActiveCard();
-    }
-    function nextCard() {
-        if (cards.length === 0) return;
-        current = (current + 1) % cards.length;
-        renderActiveCard();
-    }
-
-    function addCard(q, a) {
-        if (!q || !a) return;
-        cards.push({ question: q, answer: a });
-        current = cards.length - 1;
-        save();
-        renderActiveCard();
-        renderCardsList();
-    }
-
-    function deleteCard(index) {
-        if (index < 0 || index >= cards.length) return;
-        cards.splice(index, 1);
-        if (current >= cards.length) current = Math.max(0, cards.length - 1);
-        save();
-        renderActiveCard();
-        renderCardsList();
-    }
-
-    function clearAll() {
-        if (!confirm('Clear all cards?')) return;
-        cards = [];
-        current = 0;
-        save();
-        renderActiveCard();
-        renderCardsList();
-    }
-
-    function escapeHtml(s) {
-        return String(s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    }
-
-    // Hook up controls if present
-    function attachControls() {
-        if (el.prevBtn) el.prevBtn.addEventListener('click', prevCard);
-        if (el.nextBtn) el.nextBtn.addEventListener('click', nextCard);
-        if (el.clearBtn) el.clearBtn.addEventListener('click', clearAll);
-
-        if (el.addToggle && el.addForm) {
-            el.addToggle.addEventListener('click', () => {
-                el.addForm.style.display = el.addForm.style.display === 'none' ? 'block' : 'none';
-            });
+            document.getElementById('filterCount').style.display = 'none';
         }
 
-        if (el.addForm && el.qInput && el.aInput) {
-            el.addForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const q = el.qInput.value.trim();
-                const a = el.aInput.value.trim();
-                if (!q || !a) return;
-                addCard(q, a);
-                el.qInput.value = '';
-                el.aInput.value = '';
-                if (el.addForm.style) el.addForm.style.display = 'none';
-            });
-        } else if (el.saveBtn && el.qInput && el.aInput) {
-            el.saveBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const q = el.qInput.value.trim();
-                const a = el.aInput.value.trim();
-                if (!q || !a) return;
-                addCard(q, a);
-                el.qInput.value = '';
-                el.aInput.value = '';
-            });
+        // Render card
+        UI.renderCard();
+
+        // Update card nav
+        const currentCount = StudyMode.getCurrentCardCount();
+        document.getElementById('cardNav').textContent = `/ ${currentCount}`;
+        document.getElementById('cardIndex').value = currentCount > 0 ? AppState.activeCardIndex + 1 : 0;
+    },
+
+    renderCard() {
+        const card = getCurrentCard();
+        const cardContainer = document.getElementById('cardContainer');
+        const flashcard = document.getElementById('flashcard');
+
+        if (!card) {
+            document.getElementById('cardFront').textContent = 'No cards in this deck';
+            document.getElementById('cardBack').textContent = 'Add a card to get started';
+            flashcard.classList.remove('is-flipped');
+            return;
         }
 
-        // keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-            if (e.key === 'ArrowLeft') prevCard();
-            if (e.key === 'ArrowRight') nextCard();
-            if (e.key === 'Delete') {
-                if (cards.length > 0 && confirm('Delete current card?')) deleteCard(current);
+        document.getElementById('cardFront').textContent = card.front;
+        document.getElementById('cardBack').textContent = card.back;
+
+        // Apply flip state
+        if (AppState.isCardFlipped) {
+            flashcard.classList.add('is-flipped');
+        } else {
+            flashcard.classList.remove('is-flipped');
+        }
+    },
+
+    render() {
+        UI.renderDeckList();
+        UI.renderMainContent();
+    },
+};
+
+// ============================================
+// Event Handlers
+// ============================================
+
+function onNewDeckClick() {
+    AppState.editingDeckId = null;
+    document.getElementById('deckModalTitle').textContent = 'New Deck';
+    document.getElementById('deckNameInput').value = '';
+    Modal.open('deckModal');
+}
+
+function onEditDeckClick() {
+    const deck = getCurrentDeck();
+    if (!deck) return;
+
+    AppState.editingDeckId = deck.id;
+    document.getElementById('deckModalTitle').textContent = 'Edit Deck';
+    document.getElementById('deckNameInput').value = deck.name;
+    Modal.open('deckModal');
+}
+
+function onDeleteDeckClick() {
+    const deck = getCurrentDeck();
+    if (!deck) return;
+
+    AppState.confirmAction = () => {
+        DeckOps.delete(deck.id);
+        Modal.closeAll();
+        AppState.confirmAction = null;
+        UI.render();
+    };
+
+    document.getElementById('confirmModalTitle').textContent = 'Delete Deck?';
+    document.getElementById('confirmModalMessage').textContent = `Are you sure you want to delete "${deck.name}"? This cannot be undone.`;
+    Modal.open('confirmModal');
+}
+
+function onNewCardClick() {
+    if (!AppState.activeDeckId) return;
+
+    AppState.editingCardId = null;
+    document.getElementById('cardModalTitle').textContent = 'New Card';
+    document.getElementById('cardFrontInput').value = '';
+    document.getElementById('cardBackInput').value = '';
+    Modal.open('cardModal');
+}
+
+function onEditCardClick() {
+    const card = getCurrentCard();
+    if (!card) return;
+
+    AppState.editingCardId = card.id;
+    document.getElementById('cardModalTitle').textContent = 'Edit Card';
+    document.getElementById('cardFrontInput').value = card.front;
+    document.getElementById('cardBackInput').value = card.back;
+    Modal.open('cardModal');
+}
+
+function onDeleteCardClick() {
+    const card = getCurrentCard();
+    if (!card || !AppState.activeDeckId) return;
+
+    AppState.confirmAction = () => {
+        CardOps.delete(AppState.activeDeckId, card.id);
+        Modal.closeAll();
+        AppState.confirmAction = null;
+        UI.render();
+    };
+
+    document.getElementById('confirmModalTitle').textContent = 'Delete Card?';
+    document.getElementById('confirmModalMessage').textContent = `Delete this card? This cannot be undone.`;
+    Modal.open('confirmModal');
+}
+
+function onDeckFormSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('deckNameInput').value.trim();
+
+    if (!name) {
+        alert('Please enter a deck name');
+        return;
+    }
+
+    if (AppState.editingDeckId) {
+        DeckOps.update(AppState.editingDeckId, name);
+    } else {
+        DeckOps.create(name);
+    }
+
+    Modal.close('deckModal');
+    AppState.editingDeckId = null;
+    UI.render();
+}
+
+function onCardFormSubmit(e) {
+    e.preventDefault();
+    const front = document.getElementById('cardFrontInput').value.trim();
+    const back = document.getElementById('cardBackInput').value.trim();
+
+    if (!front || !back) {
+        alert('Please fill in both front and back');
+        return;
+    }
+
+    if (!AppState.activeDeckId) return;
+
+    if (AppState.editingCardId) {
+        CardOps.update(AppState.activeDeckId, AppState.editingCardId, front, back);
+    } else {
+        CardOps.create(AppState.activeDeckId, front, back);
+    }
+
+    Modal.close('cardModal');
+    AppState.editingCardId = null;
+    UI.render();
+}
+
+function onSearchInput(e) {
+    const query = e.target.value;
+    Search.execute(query);
+    UI.renderMainContent();
+}
+
+function onCardIndexChange(e) {
+    const index = parseInt(e.target.value, 10);
+    if (!isNaN(index) && index > 0) {
+        StudyMode.goToCard(index - 1);
+        UI.renderCard();
+    }
+}
+
+function onFlipBtnClick() {
+    StudyMode.flipCard();
+    UI.renderCard();
+}
+
+function onNextBtnClick() {
+    StudyMode.nextCard();
+    UI.renderCard();
+}
+
+function onPrevBtnClick() {
+    StudyMode.prevCard();
+    UI.renderCard();
+}
+
+function onShuffleBtnClick() {
+    StudyMode.shuffle();
+    UI.render();
+}
+
+// Keyboard shortcuts
+function onKeyDown(e) {
+    if (!AppState.activeDeckId) return;
+
+    const modalOpen = document.querySelector('.modal.is-open');
+    if (modalOpen) {
+        if (e.key === 'Escape') {
+            Modal.closeAll();
+        }
+        return;
+    }
+
+    switch (e.key) {
+        case ' ':
+            e.preventDefault();
+            onFlipBtnClick();
+            break;
+        case 'ArrowLeft':
+            e.preventDefault();
+            onPrevBtnClick();
+            break;
+        case 'ArrowRight':
+            e.preventDefault();
+            onNextBtnClick();
+            break;
+    }
+}
+
+// Modal close buttons
+function setupModalListeners() {
+    // Deck modal
+    document.getElementById('closeDeckModal').addEventListener('click', () => Modal.close('deckModal'));
+    document.getElementById('cancelDeckBtn').addEventListener('click', () => Modal.close('deckModal'));
+    document.getElementById('deckForm').addEventListener('submit', onDeckFormSubmit);
+
+    // Card modal
+    document.getElementById('closeCardModal').addEventListener('click', () => Modal.close('cardModal'));
+    document.getElementById('cancelCardBtn').addEventListener('click', () => Modal.close('cardModal'));
+    document.getElementById('cardForm').addEventListener('submit', onCardFormSubmit);
+
+    // Confirm modal
+    document.getElementById('confirmYesBtn').addEventListener('click', () => {
+        if (AppState.confirmAction) AppState.confirmAction();
+    });
+    document.getElementById('confirmNoBtn').addEventListener('click', () => {
+        Modal.close('confirmModal');
+        AppState.confirmAction = null;
+    });
+
+    // Close modals on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            Modal.closeAll();
+        }
+    });
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                Modal.close(modal.id);
             }
         });
-    }
+    });
+}
 
-    // Init
-    function init() {
-        load();
-        attachControls();
-        renderActiveCard();
-        renderCardsList();
-    }
+// ============================================
+// Utility: HTML Escaping
+// ============================================
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================
+// Initialization
+// ============================================
+
+function init() {
+    Storage.init();
+
+    // Setup event listeners
+    document.getElementById('newDeckBtn').addEventListener('click', onNewDeckClick);
+    document.getElementById('editDeckBtn').addEventListener('click', onEditDeckClick);
+    document.getElementById('deleteDeckBtn').addEventListener('click', onDeleteDeckClick);
+
+    document.getElementById('newCardBtn').addEventListener('click', onNewCardClick);
+    document.getElementById('editCardBtn').addEventListener('click', onEditCardClick);
+    document.getElementById('deleteCardBtn').addEventListener('click', onDeleteCardClick);
+
+    document.getElementById('flipBtn').addEventListener('click', onFlipBtnClick);
+    document.getElementById('nextBtn').addEventListener('click', onNextBtnClick);
+    document.getElementById('prevBtn').addEventListener('click', onPrevBtnClick);
+    document.getElementById('shuffleBtn').addEventListener('click', onShuffleBtnClick);
+
+    document.getElementById('searchInput').addEventListener('input', onSearchInput);
+    document.getElementById('cardIndex').addEventListener('change', onCardIndexChange);
+
+    setupModalListeners();
+    document.addEventListener('keydown', onKeyDown);
+
+    // Initial render
+    if (AppState.decks.length > 0 && !AppState.activeDeckId) {
+        AppState.activeDeckId = AppState.decks[0].id;
     }
-})();
+    UI.render();
+
+    // Make flashcard clickable to flip
+    document.getElementById('flashcard').addEventListener('click', onFlipBtnClick);
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}

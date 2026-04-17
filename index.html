@@ -1,112 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flashcards App</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A browser-based flashcard study application">
+    <title>Flashcards Study App</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Header -->
-  <header class="app-header">
-    <div class="header-content">
-      <h1>Flashcards App</h1>
-      <button class="btn btn-primary" aria-label="Create a new deck">
-        + New Deck
-      </button>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="app-title">📚 Flashcards</h1>
+            <button class="btn btn-primary" id="newDeckBtn" aria-label="Create a new deck">
+                + New Deck
+            </button>
+        </header>
+
+        <!-- Main Layout: Sidebar + Content -->
+        <div class="app-body">
+            <!-- Sidebar: Deck List -->
+            <aside class="sidebar">
+                <h2 class="sidebar-title">Decks</h2>
+                <nav class="deck-list" id="deckList" aria-label="Decks navigation">
+                    <!-- Deck items inserted here -->
+                </nav>
+                <div class="empty-state" id="emptyDecks" style="display: none;">
+                    <p>No decks yet. Create one to get started!</p>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Empty State -->
+                <section class="empty-state-container" id="emptyState">
+                    <div class="empty-state">
+                        <p>👋 Select a deck to begin studying</p>
+                    </div>
+                </section>
+
+                <!-- Deck View -->
+                <section class="deck-view" id="deckView" style="display: none;">
+                    <!-- Deck Header -->
+                    <div class="deck-header">
+                        <h2 id="deckTitle">Deck Name</h2>
+                        <div class="deck-actions">
+                            <button class="btn btn-small" id="editDeckBtn" aria-label="Edit deck">Edit</button>
+                            <button class="btn btn-small btn-danger" id="deleteDeckBtn" aria-label="Delete deck">Delete</button>
+                        </div>
+                    </div>
+
+                    <!-- Deck Toolbar -->
+                    <div class="deck-toolbar">
+                        <div class="search-box">
+                            <input 
+                                type="search" 
+                                id="searchInput" 
+                                placeholder="Search cards..." 
+                                aria-label="Search cards in deck"
+                            >
+                        </div>
+                        <button class="btn btn-secondary" id="shuffleBtn" aria-label="Shuffle cards">
+                            🔀 Shuffle
+                        </button>
+                        <button class="btn btn-primary" id="newCardBtn" aria-label="Add a new card">
+                            + New Card
+                        </button>
+                    </div>
+
+                    <!-- Card Stats -->
+                    <div class="card-stats">
+                        <span id="cardCount">0 cards</span>
+                        <span id="filterCount" style="display: none;">(<span id="filterCountNum">0</span> shown)</span>
+                    </div>
+
+                    <!-- Study Area -->
+                    <div class="study-area">
+                        <!-- Card Display -->
+                        <div class="card-container" id="cardContainer">
+                            <div class="flashcard" id="flashcard">
+                                <div class="flashcard-inner">
+                                    <div class="flashcard-front">
+                                        <p id="cardFront">Select a card to begin</p>
+                                    </div>
+                                    <div class="flashcard-back">
+                                        <p id="cardBack">Card back</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Controls -->
+                        <div class="card-controls">
+                            <button class="btn btn-secondary" id="prevBtn" aria-label="Previous card">← Previous</button>
+                            <button class="btn btn-secondary" id="flipBtn" aria-label="Flip card">🔄 Flip</button>
+                            <button class="btn btn-secondary" id="nextBtn" aria-label="Next card">Next →</button>
+                        </div>
+
+                        <!-- Card Navigation -->
+                        <div class="card-nav">
+                            <input 
+                                type="number" 
+                                id="cardIndex" 
+                                min="1" 
+                                value="1"
+                                aria-label="Current card number"
+                            >
+                            <span id="cardNav">/ 0</span>
+                        </div>
+
+                        <!-- Card Actions (Edit/Delete) -->
+                        <div class="card-actions">
+                            <button class="btn btn-small" id="editCardBtn" aria-label="Edit current card">Edit</button>
+                            <button class="btn btn-small btn-danger" id="deleteCardBtn" aria-label="Delete current card">Delete</button>
+                        </div>
+                    </div>
+
+                    <!-- Cards List View (Optional) -->
+                    <div class="cards-list" id="cardsList">
+                        <!-- Card items inserted here -->
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>💡 Press <kbd>Space</kbd> to flip, <kbd>←</kbd><kbd>→</kbd> to navigate, or <kbd>Esc</kbd> to close modals.</p>
+        </footer>
     </div>
-  </header>
 
-  <!-- Main Layout -->
-  <div class="app-container">
-    <!-- Sidebar: Deck List -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>Decks</h2>
-      </div>
-      <nav class="deck-nav">
-        <ul class="deck-list" role="navigation" aria-label="Available decks">
-          <li class="deck-item active" data-deck-id="1">
-            <button class="deck-btn">Biology</button>
-          </li>
-          <li class="deck-item" data-deck-id="2">
-            <button class="deck-btn">History</button>
-          </li>
-          <li class="deck-item" data-deck-id="3">
-            <button class="deck-btn">Languages</button>
-          </li>
-          <li class="deck-item" data-deck-id="4">
-            <button class="deck-btn">Custom Deck</button>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+    <!-- Modals -->
 
-    <!-- Main Content Area -->
-    <main class="main-content">
-      <!-- Deck Header -->
-      <div class="deck-header">
-        <h2 class="deck-title">Biology</h2>
-        <span class="card-count">12 cards</span>
-      </div>
-
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="search-box">
-          <input 
-            type="text" 
-            class="input search-input" 
-            placeholder="Search cards..." 
-            aria-label="Search cards in deck"
-          >
-        </div>
-        <div class="toolbar-actions">
-          <button class="btn btn-secondary" aria-label="Shuffle deck">
-            🔀 Shuffle
-          </button>
-          <button class="btn btn-primary" aria-label="Add new card">
-            + New Card
-          </button>
-        </div>
-      </div>
-
-      <!-- Card Display Area -->
-      <div class="card-container">
-        <div class="card-display">
-          <div class="card-content">
-            <div class="card-side front">
-              <p class="card-label">Front</p>
-              <h3>What is photosynthesis?</h3>
+    <!-- New/Edit Deck Modal -->
+    <div class="modal" id="deckModal" role="dialog" aria-labelledby="deckModalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="deckModalTitle">New Deck</h2>
+                <button class="modal-close" id="closeDeckModal" aria-label="Close modal">✕</button>
             </div>
-            <div class="card-side back hidden">
-              <p class="card-label">Back</p>
-              <p>The process by which plants convert light into chemical energy.</p>
-            </div>
-          </div>
-          <button class="btn-flip" aria-label="Flip card">
-            Flip
-          </button>
+            <form id="deckForm" class="modal-form">
+                <div class="form-group">
+                    <label for="deckNameInput">Deck Name</label>
+                    <input 
+                        type="text" 
+                        id="deckNameInput" 
+                        placeholder="e.g., Spanish Vocab"
+                        required
+                        aria-required="true"
+                    >
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Deck</button>
+                    <button type="button" class="btn btn-secondary" id="cancelDeckBtn">Cancel</button>
+                </div>
+            </form>
         </div>
-      </div>
+    </div>
 
-      <!-- Card Controls -->
-      <div class="card-controls">
-        <button class="btn btn-control" aria-label="Previous card">
-          ← Prev
-        </button>
-        <span class="card-position">1 / 12</span>
-        <button class="btn btn-control" aria-label="Next card">
-          Next →
-        </button>
-      </div>
-    </main>
-  </div>
+    <!-- New/Edit Card Modal -->
+    <div class="modal" id="cardModal" role="dialog" aria-labelledby="cardModalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cardModalTitle">New Card</h2>
+                <button class="modal-close" id="closeCardModal" aria-label="Close modal">✕</button>
+            </div>
+            <form id="cardForm" class="modal-form">
+                <div class="form-group">
+                    <label for="cardFrontInput">Front (Question)</label>
+                    <textarea 
+                        id="cardFrontInput" 
+                        placeholder="What should the student learn?"
+                        rows="4"
+                        required
+                        aria-required="true"
+                    ></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="cardBackInput">Back (Answer)</label>
+                    <textarea 
+                        id="cardBackInput" 
+                        placeholder="The answer or explanation"
+                        rows="4"
+                        required
+                        aria-required="true"
+                    ></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Card</button>
+                    <button type="button" class="btn btn-secondary" id="cancelCardBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  <!-- Footer -->
-  <footer class="app-footer">
-    <p>💡 <strong>Tip:</strong> Click on a deck to select it, then use Prev/Next to navigate cards. Click the Flip button to reveal the answer.</p>
-  </footer>
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmModal" role="dialog" aria-labelledby="confirmModalTitle" aria-hidden="true">
+        <div class="modal-content modal-confirm">
+            <div class="modal-header">
+                <h2 id="confirmModalTitle">Confirm Action</h2>
+            </div>
+            <p id="confirmModalMessage">Are you sure?</p>
+            <div class="form-actions">
+                <button class="btn btn-danger" id="confirmYesBtn">Yes, Delete</button>
+                <button class="btn btn-secondary" id="confirmNoBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-  <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
