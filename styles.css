@@ -12,6 +12,10 @@
   --color-text-light: #718096;
   --color-focus: #5e72e4;
 
+  /* Card Colors */
+  --color-card-front: linear-gradient(135deg, #5e72e4, #667eea);
+  --color-card-back: linear-gradient(135deg, #48bb78, #38a169);
+
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -49,6 +53,10 @@
     --color-border: #4a5568;
     --color-text: #e2e8f0;
     --color-text-light: #cbd5e0;
+
+    /* Dark mode card colors */
+    --color-card-front: linear-gradient(135deg, #4c63d2, #5a67d8);
+    --color-card-back: linear-gradient(135deg, #38a169, #2f855a);
   }
 }
 
@@ -59,6 +67,10 @@
   --color-border: #4a5568;
   --color-text: #e2e8f0;
   --color-text-light: #cbd5e0;
+
+  /* Dark mode card colors */
+  --color-card-front: linear-gradient(135deg, #4c63d2, #5a67d8);
+  --color-card-back: linear-gradient(135deg, #38a169, #2f855a);
 }
 
 [data-theme="light"] {
@@ -67,6 +79,10 @@
   --color-border: #e2e8f0;
   --color-text: #2d3748;
   --color-text-light: #718096;
+
+  /* Light mode card colors */
+  --color-card-front: linear-gradient(135deg, #5e72e4, #667eea);
+  --color-card-back: linear-gradient(135deg, #48bb78, #38a169);
 }
 
 /* ==========================================
@@ -385,7 +401,7 @@ body {
   width: 100%;
   height: 100%;
   padding: var(--spacing-xl);
-  background: linear-gradient(135deg, var(--color-primary), #667eea);
+  background: var(--color-card-front);
   color: white;
   border-radius: 8px;
   display: flex;
@@ -402,7 +418,7 @@ body {
 
 .flashcard-back {
   transform: rotateY(180deg);
-  background: linear-gradient(135deg, #667eea, var(--color-primary));
+  background: var(--color-card-back);
 }
 
 .flashcard-front p,
