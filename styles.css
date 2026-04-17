@@ -13,8 +13,8 @@
   --color-focus: #5e72e4;
 
   /* Card Colors */
-  --color-card-front: linear-gradient(135deg, #5e72e4, #667eea);
-  --color-card-back: linear-gradient(135deg, #48bb78, #38a169);
+  --color-question-bg: linear-gradient(135deg, #7c3aed, #a855f7);
+  --color-answer-bg: linear-gradient(135deg, #48bb78, #38a169);
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -55,8 +55,8 @@
     --color-text-light: #cbd5e0;
 
     /* Dark mode card colors */
-    --color-card-front: linear-gradient(135deg, #4c63d2, #5a67d8);
-    --color-card-back: linear-gradient(135deg, #38a169, #2f855a);
+    --color-question-bg: linear-gradient(135deg, #6d28d9, #7c3aed);
+    --color-answer-bg: linear-gradient(135deg, #16a34a, #15803d);
   }
 }
 
@@ -69,8 +69,8 @@
   --color-text-light: #cbd5e0;
 
   /* Dark mode card colors */
-  --color-card-front: linear-gradient(135deg, #4c63d2, #5a67d8);
-  --color-card-back: linear-gradient(135deg, #38a169, #2f855a);
+  --color-question-bg: linear-gradient(135deg, #6d28d9, #7c3aed);
+  --color-answer-bg: linear-gradient(135deg, #16a34a, #15803d);
 }
 
 [data-theme="light"] {
@@ -81,8 +81,8 @@
   --color-text-light: #718096;
 
   /* Light mode card colors */
-  --color-card-front: linear-gradient(135deg, #5e72e4, #667eea);
-  --color-card-back: linear-gradient(135deg, #48bb78, #38a169);
+  --color-question-bg: linear-gradient(135deg, #7c3aed, #a855f7);
+  --color-answer-bg: linear-gradient(135deg, #48bb78, #38a169);
 }
 
 /* ==========================================
@@ -439,7 +439,6 @@ body {
   width: 100%;
   height: 100%;
   padding: var(--spacing-xl);
-  background: var(--color-card-front);
   color: white;
   border-radius: 8px;
   display: flex;
@@ -457,7 +456,6 @@ body {
 
 .flashcard-back {
   transform: rotateY(180deg);
-  background: var(--color-card-back);
 }
 
 .flashcard-front p,

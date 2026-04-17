@@ -298,6 +298,8 @@ const UI = {
   renderCard() {
     const card = getCurrentCard();
     const flashcard = document.getElementById('flashcard');
+    const flashcardFront = document.querySelector('.flashcard-front');
+    const flashcardBack = document.querySelector('.flashcard-back');
     const frontLabel = document.querySelector('.flashcard-front .card-label');
     const backLabel = document.querySelector('.flashcard-back .card-label');
 
@@ -306,6 +308,8 @@ const UI = {
       document.getElementById('card-back').textContent = 'Add a card to get started';
       frontLabel.textContent = 'Question';
       backLabel.textContent = 'Answer';
+      flashcardFront.style.background = 'var(--color-question-bg)';
+      flashcardBack.style.background = 'var(--color-answer-bg)';
       flashcard.classList.remove('is-flipped');
       return;
     }
@@ -316,12 +320,16 @@ const UI = {
       document.getElementById('card-back').textContent = card.back;
       frontLabel.textContent = 'Question';
       backLabel.textContent = 'Answer';
+      flashcardFront.style.background = 'var(--color-question-bg)';
+      flashcardBack.style.background = 'var(--color-answer-bg)';
     } else {
       // answer mode - show answer first
       document.getElementById('card-front').textContent = card.back;
       document.getElementById('card-back').textContent = card.front;
       frontLabel.textContent = 'Answer';
       backLabel.textContent = 'Question';
+      flashcardFront.style.background = 'var(--color-answer-bg)';
+      flashcardBack.style.background = 'var(--color-question-bg)';
     }
 
     // Apply flip state
