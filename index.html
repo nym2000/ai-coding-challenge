@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <h1>Flashcards App</h1>
+      <button class="btn btn-primary" aria-label="Create a new deck">
+        + New Deck
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="app-container">
+    <!-- Sidebar: Deck List -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Decks</h2>
+      </div>
+      <nav class="deck-nav">
+        <ul class="deck-list" role="navigation" aria-label="Available decks">
+          <li class="deck-item active" data-deck-id="1">
+            <button class="deck-btn">Biology</button>
+          </li>
+          <li class="deck-item" data-deck-id="2">
+            <button class="deck-btn">History</button>
+          </li>
+          <li class="deck-item" data-deck-id="3">
+            <button class="deck-btn">Languages</button>
+          </li>
+          <li class="deck-item" data-deck-id="4">
+            <button class="deck-btn">Custom Deck</button>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Deck Header -->
+      <div class="deck-header">
+        <h2 class="deck-title">Biology</h2>
+        <span class="card-count">12 cards</span>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-box">
+          <input 
+            type="text" 
+            class="input search-input" 
+            placeholder="Search cards..." 
+            aria-label="Search cards in deck"
+          >
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-secondary" aria-label="Shuffle deck">
+            🔀 Shuffle
+          </button>
+          <button class="btn btn-primary" aria-label="Add new card">
+            + New Card
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Display Area -->
+      <div class="card-container">
+        <div class="card-display">
+          <div class="card-content">
+            <div class="card-side front">
+              <p class="card-label">Front</p>
+              <h3>What is photosynthesis?</h3>
+            </div>
+            <div class="card-side back hidden">
+              <p class="card-label">Back</p>
+              <p>The process by which plants convert light into chemical energy.</p>
+            </div>
+          </div>
+          <button class="btn-flip" aria-label="Flip card">
+            Flip
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Controls -->
+      <div class="card-controls">
+        <button class="btn btn-control" aria-label="Previous card">
+          ← Prev
+        </button>
+        <span class="card-position">1 / 12</span>
+        <button class="btn btn-control" aria-label="Next card">
+          Next →
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>💡 <strong>Tip:</strong> Click on a deck to select it, then use Prev/Next to navigate cards. Click the Flip button to reveal the answer.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
