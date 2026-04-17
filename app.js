@@ -14,6 +14,7 @@ const AppState = {
   editingCardId: null,
   confirmAction: null,
   theme: 'auto', // 'light', 'dark', or 'auto'
+  mode: 'question', // 'question' or 'answer'
 };
 
 // ============================================
@@ -273,6 +274,16 @@ const UI = {
     // Update deck title
     document.getElementById('deck-title').textContent = deck.name;
 
+    // Update switch mode button
+    const switchModeBtn = document.getElementById('switch-mode-button');
+    if (AppState.mode === 'question') {
+      switchModeBtn.textContent = '🔄 Answer Mode';
+      switchModeBtn.setAttribute('aria-label', 'Switch to answer mode');
+    } else {
+      switchModeBtn.textContent = '🔄 Question Mode';
+      switchModeBtn.setAttribute('aria-label', 'Switch to question mode');
+    }
+
     // Update card stats
     const cardCount = cards.length;
     document.getElementById('card-count').textContent = `${cardCount} card${cardCount !== 1 ? 's' : ''}`;
@@ -304,8 +315,20 @@ const UI = {
       return;
     }
 
-    document.getElementById('card-front').textContent = card.front;
-    document.getElementById('card-back').textContent = card.back;
+    const labelText = AppState.mode === 'question' ? 'Question' : 'Answer';
+
+    if (AppState.mode === 'question') {
+      document.getElementById('card-front').textContent = card.front;
+      document.getElementById('card-back').textContent = card.front;
+    } else {
+      document.getElementById('card-front').textContent = card.back;
+      document.getElementById('card-back').textContent = card.back;
+    }
+
+    // Update card labels
+    document.querySelectorAll('.card-label').forEach(label => {
+      label.textContent = labelText;
+    });
 
     // Apply flip state
     if (AppState.isCardFlipped) {
@@ -418,6 +441,12 @@ function onShuffleBtnClick() {
   UI.render();
 }
 
+function onSwitchModeBtnClick() {
+  AppState.mode = AppState.mode === 'question' ? 'answer' : 'question';
+  AppState.isCardFlipped = false;
+  UI.renderMainContent();
+}
+
 // Keyboard shortcuts
 function onKeyDown(e) {
   if (!AppState.activeDeckId) return;
@@ -470,6 +499,7 @@ function init() {
   document.getElementById('next-card').addEventListener('click', onNextBtnClick);
   document.getElementById('prev-card').addEventListener('click', onPrevBtnClick);
   document.getElementById('shuffle-button').addEventListener('click', onShuffleBtnClick);
+  document.getElementById('switch-mode-button').addEventListener('click', onSwitchModeBtnClick);
 
   document.getElementById('search-input').addEventListener('input', onSearchInput);
   document.getElementById('card-index').addEventListener('change', onCardIndexChange);
