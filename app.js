@@ -14,6 +14,7 @@ const AppState = {
   editingCardId: null,
   confirmAction: null,
   theme: 'auto', // 'light', 'dark', or 'auto'
+  cardMode: 'question', // 'question' or 'answer'
 };
 
 // ============================================
@@ -245,6 +246,7 @@ const UI = {
         AppState.activeDeckId = deck.id;
         AppState.activeCardIndex = 0;
         AppState.isCardFlipped = false;
+        AppState.cardMode = 'question';
         AppState.isSearchActive = false;
         AppState.filteredCards = [];
         UI.render();
@@ -296,16 +298,31 @@ const UI = {
   renderCard() {
     const card = getCurrentCard();
     const flashcard = document.getElementById('flashcard');
+    const frontLabel = document.querySelector('.flashcard-front .card-label');
+    const backLabel = document.querySelector('.flashcard-back .card-label');
 
     if (!card) {
       document.getElementById('card-front').textContent = 'No cards in this deck';
       document.getElementById('card-back').textContent = 'Add a card to get started';
+      frontLabel.textContent = 'Question';
+      backLabel.textContent = 'Answer';
       flashcard.classList.remove('is-flipped');
       return;
     }
 
-    document.getElementById('card-front').textContent = card.front;
-    document.getElementById('card-back').textContent = card.back;
+    // Set front and back based on mode
+    if (AppState.cardMode === 'question') {
+      document.getElementById('card-front').textContent = card.front;
+      document.getElementById('card-back').textContent = card.back;
+      frontLabel.textContent = 'Question';
+      backLabel.textContent = 'Answer';
+    } else {
+      // answer mode - show answer first
+      document.getElementById('card-front').textContent = card.back;
+      document.getElementById('card-back').textContent = card.front;
+      frontLabel.textContent = 'Answer';
+      backLabel.textContent = 'Question';
+    }
 
     // Apply flip state
     if (AppState.isCardFlipped) {
@@ -418,6 +435,19 @@ function onShuffleBtnClick() {
   UI.render();
 }
 
+function onCardModeToggle(mode) {
+  AppState.cardMode = mode;
+  AppState.isCardFlipped = false;
+  
+  // Update button states
+  document.getElementById('question-mode-btn').classList.toggle('active', mode === 'question');
+  document.getElementById('answer-mode-btn').classList.toggle('active', mode === 'answer');
+  document.getElementById('question-mode-btn').setAttribute('aria-pressed', mode === 'question');
+  document.getElementById('answer-mode-btn').setAttribute('aria-pressed', mode === 'answer');
+  
+  UI.renderCard();
+}
+
 // Keyboard shortcuts
 function onKeyDown(e) {
   if (!AppState.activeDeckId) return;
@@ -466,6 +496,9 @@ function init() {
   document.getElementById('edit-card-button').addEventListener('click', onEditCardClick);
   document.getElementById('delete-card-button').addEventListener('click', onDeleteCardClick);
 
+  document.getElementById('question-mode-btn').addEventListener('click', () => onCardModeToggle('question'));
+  document.getElementById('answer-mode-btn').addEventListener('click', () => onCardModeToggle('answer'));
+
   document.getElementById('flip-card').addEventListener('click', onFlipBtnClick);
   document.getElementById('next-card').addEventListener('click', onNextBtnClick);
   document.getElementById('prev-card').addEventListener('click', onPrevBtnClick);
@@ -485,8 +518,12 @@ function init() {
   // Initial render
   if (AppState.decks.length > 0 && !AppState.activeDeckId) {
     AppState.activeDeckId = AppState.decks[0].id;
+    AppState.cardMode = 'question';
   }
   UI.render();
+  
+  // Initialize mode button states
+  onCardModeToggle('question');
 
   console.log('Flashcards app initialized');
 }
